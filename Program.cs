@@ -143,7 +143,18 @@ class Program
         {
             Console.WriteLine("An error occurred while inserting the record:");
             Console.WriteLine(e.Message);
+            string reseed = "DECLARE @LastIdentityValue INT;" +
+           " SELECT @LastIdentityValue = IDENT_CURRENT('Expenses_table');" +
+           " DECLARE @NewValue INT;" +
+           " SET @NewValue = @LastIdentityValue - 1;" +
+           " DBCC CHECKIDENT('Expenses_table', RESEED, @NewValue); ";
+            using (SqlCommand command = new SqlCommand(reseed, connection))
+            {
+                command.ExecuteNonQuery();
+            }
+            opt(1);
         }
+
     }
 
     private static void DeleteRecord(SqlConnection connection)
@@ -343,7 +354,11 @@ class Program
                         Console.WriteLine();
                     }
                 }
-                string show = "select * from Expenses_table where ExpenseId =@ExpenseId";
+                // string show = "select * from Expenses_table where ExpenseId =@ExpenseId";
+                string show = "SELECT e.ExpenseId, e.Category, c.Name, e.Start_date, e.End_date, e.Amount, e.Description " +
+                 "FROM Expenses_table e " +
+                 "INNER JOIN Categories c ON e.Category = c.Id " +
+                 "WHERE ExpenseId = @ExpenseId";
                 using (SqlCommand command = new SqlCommand(show, connection))
                 {
                     Console.WriteLine("Enter the ExpenseId you want to view");
@@ -353,6 +368,7 @@ class Program
                     {
                         while (reader.Read())
                         {
+                            Console.WriteLine($"CategoryName: {reader["Name"]}");
                             Console.WriteLine($"ExpensesId: {reader["ExpenseId"]} Category: {reader["Category"]} Start_date: {reader["Start_date"]} End_date: {reader["End_date"]} Amount: {reader["Amount"]} Description: {reader["Description"]}");
                         }
                     }
